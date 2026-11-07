@@ -1,0 +1,43 @@
+name: test-harness
+description: 'Run tests.'
+inputs:
+  os:
+    description: 'Operating system to run the tests on (linux, windows, macos)'
+    required: true
+  node-version:
+    description: 'Node.js version to run the tests with'
+    required: true
+runs:
+  using: composite
+  steps:
+  - name: Compute commit SHAs to be used for caching purposes
+    run: |-
+      git rev-parse HEAD~1 > "$env:RUNNER_TEMP/previous-commit-sha"
+      git rev-parse HEAD > "$env:RUNNER_TEMP/current-commit-sha"
+    shell: pwsh
+  - name: restore_cache
+    uses: actions/cache@v4.3.0
+    with:
+      key: test-harness-{{ checksum "${{ runner.temp }}/previous-commit-sha" }}-${{ inputs.os }}-${{ inputs.node-version }}
+      path: |-
+        ./.cache/spectral-test-harness
+        ./test-harness/tests/
+      restore-keys: test-harness-{{ checksum "${{ runner.temp }}/previous-commit-sha" }}-${{ inputs.os }}-${{ inputs.node-version }}
+  - uses: "./.github/actions/build-binary"
+    with:
+      targets: "${{ inputs.os }}"
+      node-version: "${{ inputs.node-version }}"
+      bytecode: 'false'
+  - name: Run harness tests Windows
+    if: ${{ inputs.os == 'windows' }}
+    run: yarn test.harness --maxWorkers=3
+    shell: pwsh
+    env:
+      NODE_OPTIONS: --no-deprecation
+  - name: save_cache
+    uses: actions/cache@v4.3.0
+    with:
+      path: |-
+        ./.cache/spectral-test-harness
+        ./test-harness/tests/
+      key: test-harness-{{ checksum "${{ runner.temp }}/current-commit-sha" }}-${{ inputs.os }}-${{ inputs.node-version }}
