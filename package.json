@@ -100,7 +100,7 @@
   "devDependencies": {
     "@commitlint/cli": "^14.1.0",
     "@commitlint/config-conventional": "^12.1.4",
-    "@octokit/core": "^3.5.1",
+    "@octokit/core": "^7.0.8",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/exec": "^7.1.0",
     "@semantic-release/git": "^10.0.1",
